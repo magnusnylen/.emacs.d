@@ -5,3 +5,4 @@
 (load "my-misc.el")
 (load "my-helm.el")
 (load "my-magit.el")
+(load "my-envs.el")
