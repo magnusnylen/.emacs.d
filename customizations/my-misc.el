@@ -1,15 +1,18 @@
 ;; Misc
 (prefer-coding-system 'utf-8)
 (global-linum-mode 1)
-(show-paren-mode 1)
-(blink-cursor-mode 0)
+(show-paren-mode t)
+(blink-cursor-mode nil)
 (global-hl-line-mode 1)
 
-(setq column-number-mode t)
+(setq inhibit-startup-message t)
 (setq inhibit-startup-screen t)
-(setq scroll-bar-mode nil)
-(setq size-indication-mode t)
-(setq tool-bar-mode nil)
+(setq initial-scratch-message nil)
+
+(column-number-mode t)
+(scroll-bar-mode -1)
+(size-indication-mode t)
+(tool-bar-mode -1)
 
 ;; Default font
 (set-default-font "DejaVu Sans Mono-14")
