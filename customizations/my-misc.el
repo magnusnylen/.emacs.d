@@ -33,7 +33,7 @@
 (global-set-key [f8] 'neotree-toggle)
 
 ;; Fix path so Emacs can find programs/utils
-(add-to-list 'exec-path "C:/opt/cygwin64/bin")
+;; (add-to-list 'exec-path "C:/opt/cygwin64/bin")
 
 ;; Default directory is ${HOME}
 (setq default-directory (concat (getenv "HOME") "/"))
