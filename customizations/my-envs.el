@@ -4,7 +4,7 @@
 ;; PC
 ;; (setq initial-frame-alist '((top . 15) (left . 400) (width . 160) (height . 60)))
 ;; MB
-;; (setq initial-frame-alist '((top . 50) (left . 250) (width . 140) (height . 55)))
+;; (setq initial-frame-alist '((top . 60) (left . 250) (width . 140) (height . 50)))
 ;; Office PC
 ;; (setq initial-frame-alist '((top . 50) (left . 150) (width . 160) (height . 40)))
 
