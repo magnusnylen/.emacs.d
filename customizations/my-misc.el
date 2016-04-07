@@ -28,3 +28,6 @@
 
 ;; neotree
 (global-set-key [f8] 'neotree-toggle)
+
+;; Enable company mode globally
+(global-company-mode)
