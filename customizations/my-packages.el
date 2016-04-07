@@ -8,8 +8,7 @@
 
 (defvar my-packages)
 
-(setq my-packages '(;;ac-cider
-		    ;;auto-complete                    
+(setq my-packages '(exec-path-from-shell
 		    cider
 		    clojure-mode
                     company

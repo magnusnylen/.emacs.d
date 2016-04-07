@@ -13,3 +13,7 @@
 
 ;; Fix Mac's right alt key
 ;; (setq ns-right-alternate-modifier nil)
+
+;; Take care of Mac OS X PATH
+(when (memq window-system '(mac ns))
+  (exec-path-from-shell-initialize))
