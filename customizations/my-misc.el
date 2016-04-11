@@ -31,3 +31,8 @@
 
 ;; Enable company mode globally
 (global-company-mode)
+
+(global-set-key (kbd "RET") 'newline-and-indent)
+(global-set-key (kbd "C-;") 'comment-or-uncomment-region)
+(global-set-key (kbd "C-+") 'text-scale-increase)
+(global-set-key (kbd "C--") 'text-scale-decrease)
