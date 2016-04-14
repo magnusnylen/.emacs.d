@@ -2,7 +2,7 @@
 
 (load "my-proxy.el")
 (load "my-packages.el")
+(load "my-envs.el")
 (load "my-misc.el")
 (load "my-helm.el")
 (load "my-magit.el")
-(load "my-envs.el")
