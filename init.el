@@ -12,13 +12,13 @@
 ;; Basic  settings
 ;; ------------------------------------------------------------------
 
-(when (display-graphic-p)
-  (tool-bar-mode -1)
-  (set-frame-font "CaskaydiaMono NF 15" nil t))
+(tool-bar-mode -1)
 (menu-bar-mode -1)
-(setq inhibit-startup-screen t initial-buffer-choice  nil)
-(setq ring-bell-function 'ignore)
-(setq make-backup-files nil)
+;; (add-to-list 'default-frame-alist '(font . "CaskaydiaMono NF-13"))
+(setq inhibit-startup-screen t
+      initial-buffer-choice nil
+      ring-bell-function 'ignore
+      make-backup-files nil)
 (global-display-line-numbers-mode 1)
 
 ;; ------------------------------------------------------------------
@@ -49,13 +49,12 @@
 
 (use-package exec-path-from-shell
   :straight t
-  :if (memq window-system '(x))
+  :if (or (daemonp) (memq window-system '(x pgtk ns mac)))
   :config
   (setq exec-path-from-shell-variables
 	'("PATH"
 	  "MANPATH"
 	  "SSH_AUTH_SOCK"
-	  "GPG_AGENT_INFO"
 	  "LANG"))
   (exec-path-from-shell-initialize))
 
@@ -63,43 +62,70 @@
 ;; Theme(s)
 ;; ------------------------------------------------------------------
 
-;; (load-theme 'wombat t)
-;; (load-theme 'modus-vivendi-deuteranopia)
+;; (use-package dracula-theme
+;;  :straight t
+;;  :init (load-theme 'dracula t))
 
-(use-package dracula-theme
+(use-package modus-themes
   :straight t
-  :init (load-theme 'dracula t))
+  :demand t
+  :bind
+  (("<f5>" . modus-themes-rotate)
+   ("C-<f5>" . modus-themes-select)
+   ("M-<f5>" . modus-themes-load-random))
+  :config
+  (setq modus-themes-to-toggle '(modus-operandi modus-vivendi)
+        modus-themes-to-rotate modus-themes-items
+        modus-themes-mixed-fonts t
+        modus-themes-variable-pitch-ui t
+        modus-themes-italic-constructs t
+        modus-themes-bold-constructs t
+        modus-themes-headings
+        '((agenda-structure . (variable-pitch light 2.2))
+          (agenda-date . (variable-pitch regular 1.3))
+          (t . (regular 1.15))))
+
+  (modus-themes-include-derivatives-mode 1)
+  (modus-themes-load-theme 'modus-vivendi-deuteranopia))
 
 ;; ------------------------------------------------------------------
 ;; Misc packages and settings
 ;; ------------------------------------------------------------------
 
+;; JSON via built-in tree-sitter mode (Emacs 29+), no package needed
+(add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.jsonc\\'" . json-ts-mode))
+
+(use-package orderless
+  :straight t
+  :demand t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles partial-completion))))
+  (completion-category-defaults nil))
+
 (use-package vertico
   :straight (vertico :files (:defaults "extensions/*"))
-  :init (vertico-mode))
+  :init (vertico-mode)
+  :custom
+  (vertico-count 20)
+  (vertico-resize nil)
+  (vertico-cycle t))
 
 (use-package vertico-posframe
   :after vertico
   :hook (after-init . vertico-posframe-mode)
   :custom (vertico-posframe-poshandler #'posframe-poshandler-frame-center))
 
-(custom-set-variables
- '(vertico-count 15)
- '(vertico-resize nil)
- '(vertico-cycle t))
-
-(use-package orderless
-  :straight t
-  :custom (completion-styles '(orderless))
-  (completion-category-overrides '((file (styles partial-completion)))))
-
 (use-package marginalia
   :straight t
   :config (marginalia-mode))
 
-(straight-use-package 'yaml-mode)
+(use-package yaml-mode
+  :straight t)
 
-(straight-use-package 'nftables-mode)
+(use-package nftables-mode
+  :straight t)
 
 (use-package company
   :straight t
@@ -111,21 +137,17 @@
 
 (use-package company-box
   :straight t
-  :if (display-graphic-p)
   :after company
   :hook (company-mode . company-box-mode))
 
 ;; ------------------------------------------------------------------
-;; Eglot, languages..., Flycheck
+;; TODO: Eglot, languages..., Flycheck
 ;; ------------------------------------------------------------------
 
 ;; go install golang.org/x/tools/gopls@latest
 ;; go install honnef.co/go/tools/cmd/staticcheck@latest
 ;; npm install -g typescript typescript-language-server
 ;; npm install -g bash-language-server
-
-;; (use-package flycheck
-;;   :hook (prog-mode . flycheck-mode))
 
 ;; ------------------------------------------------------------------
 
