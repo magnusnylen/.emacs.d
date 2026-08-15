@@ -14,7 +14,9 @@
 
 (tool-bar-mode -1)
 (menu-bar-mode -1)
-;; (add-to-list 'default-frame-alist '(font . "CaskaydiaMono NF-13"))
+(if (member "CaskaydiaMono NF" (font-family-list))
+    (add-to-list 'default-frame-alist '(font . "CaskaydiaMono NF-13"))
+  (add-to-list 'default-frame-alist '(font . "monospace-13")))
 (setq inhibit-startup-screen t
       initial-buffer-choice nil
       ring-bell-function 'ignore
@@ -25,7 +27,6 @@
 ;; Straight
 ;; ------------------------------------------------------------------
 
-(defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el"
                          (or (bound-and-true-p straight-base-dir) user-emacs-directory)))
@@ -59,20 +60,15 @@
   (exec-path-from-shell-initialize))
 
 ;; ------------------------------------------------------------------
-;; Theme(s)
+;; Theme
 ;; ------------------------------------------------------------------
-
-;; (use-package dracula-theme
-;;  :straight t
-;;  :init (load-theme 'dracula t))
 
 (use-package modus-themes
   :straight t
   :demand t
-  :bind
-  (("<f5>" . modus-themes-rotate)
-   ("C-<f5>" . modus-themes-select)
-   ("M-<f5>" . modus-themes-load-random))
+  :bind (("<f5>"     . modus-themes-rotate)
+	 ("C-<f5>"   . modus-themes-select)
+	 ("M-<f5>"   . modus-themes-load-random))
   :config
   (setq modus-themes-to-toggle '(modus-operandi modus-vivendi)
         modus-themes-to-rotate modus-themes-items
@@ -92,7 +88,6 @@
 ;; Misc packages and settings
 ;; ------------------------------------------------------------------
 
-;; JSON via built-in tree-sitter mode (Emacs 29+), no package needed
 (add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.jsonc\\'" . json-ts-mode))
 
@@ -112,11 +107,6 @@
   (vertico-resize nil)
   (vertico-cycle t))
 
-(use-package vertico-posframe
-  :after vertico
-  :hook (after-init . vertico-posframe-mode)
-  :custom (vertico-posframe-poshandler #'posframe-poshandler-frame-center))
-
 (use-package marginalia
   :straight t
   :config (marginalia-mode))
@@ -127,27 +117,70 @@
 (use-package nftables-mode
   :straight t)
 
-(use-package company
+(use-package corfu
   :straight t
+  :init (global-corfu-mode)
+  :custom
+  (corfu-cycle t)
+  (corfu-auto t)
+  (corfu-auto-delay 0.25)
+  (corfu-auto-prefix 2))
+
+(use-package consult
+  :straight t
+  :bind (("C-x b"   . consult-buffer)
+         ("C-s"     . consult-line)
+         ("C-M-l"   . consult-imenu)
+         ("C-x C-r" . consult-recent-file)
+         ("C-c M-x" . consult-mode-command)))
+
+(use-package embark
+  :straight t
+  :bind (("C-." . embark-act)
+         ("M-." . embark-dwim)))
+
+(use-package embark-consult
+  :straight t
+  :after (embark consult)
+  :hook (embark-collect-mode . consult-preview-at-point-mode))
+
+;; ------------------------------------------------------------------
+;; Languages: Go, TypeScript, Bash (Eglot + Flymake)
+;; ------------------------------------------------------------------
+
+;; Install servers (all on PATH via exec-path-from-shell):
+;;   Go tools install to /home/magnus/opt/go/bin (on PATH):
+;;     GOBIN=/home/magnus/opt/go/bin go install golang.org/x/tools/gopls@latest
+;;     GOBIN=/home/magnus/opt/go/bin go install honnef.co/go/tools/cmd/staticcheck@latest
+;;   npm tools install to the nvm bin (on PATH):
+;;     npm install -g typescript typescript-language-server bash-language-server
+
+;; Built-in tree-sitter modes for supported languages
+(add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.sh\\'" . bash-ts-mode))
+
+;; LSP via built-in Eglot + Flymake (no Flycheck package needed)
+(use-package eglot
+  :defer t
+  :hook (go-ts-mode        . eglot-ensure)
+  (typescript-ts-mode . eglot-ensure)
+  (tsx-ts-mode        . eglot-ensure)
+  (bash-ts-mode       . eglot-ensure)
+  :custom
+  (eglot-events-buffer-size 0)
+  (eglot-autoshutdown t)
   :config
-  (global-company-mode)
-  (setq company-idle-delay 0.2)
-  (setq company-minimum-prefix-length 2)
-  (setq company-show-numbers t))
-
-(use-package company-box
-  :straight t
-  :after company
-  :hook (company-mode . company-box-mode))
-
-;; ------------------------------------------------------------------
-;; TODO: Eglot, languages..., Flycheck
-;; ------------------------------------------------------------------
-
-;; go install golang.org/x/tools/gopls@latest
-;; go install honnef.co/go/tools/cmd/staticcheck@latest
-;; npm install -g typescript typescript-language-server
-;; npm install -g bash-language-server
+  (define-key eglot-mode-map (kbd "C-c r") #'eglot-rename)
+  (define-key eglot-mode-map (kbd "C-c a") #'eglot-code-actions)
+  (add-to-list 'completion-at-point-functions #'eglot-completion-at-point)
+  (setq eglot-workspace-configuration
+        '((gopls . ((staticcheck . t)
+                    (completeUnimported . t)
+                    (usePlaceholders . t)
+                    (directoryFilters
+                     . ["-**/node_modules" "-**/vendor" "-**/third_party"]))))))
 
 ;; ------------------------------------------------------------------
 
