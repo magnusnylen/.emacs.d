@@ -1,12 +1,10 @@
-;;; init.el --- Emacs init file -*- lexical-binding: t; -*-
-;;; Commentary:
-;; Personal Emacs configuration.
-;;; Code:
+;; ------------------------------------------------------------------
+;; Save Customize data to a separate file so Emacs never writes
+;; custom-* blocks into this init file.
+;; ------------------------------------------------------------------
 
-;; ------------------------------------------------------------------
-;; References:
-;; - https://github.com/emacs-tw/awesome-emacs
-;; ------------------------------------------------------------------
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(load custom-file 'noerror)
 
 ;; ------------------------------------------------------------------
 ;; Basic  settings
@@ -24,32 +22,32 @@
 (global-display-line-numbers-mode 1)
 
 ;; ------------------------------------------------------------------
-;; Straight
+;; Package management (vanilla package.el)
 ;; ------------------------------------------------------------------
 
-(let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el"
-                         (or (bound-and-true-p straight-base-dir) user-emacs-directory)))
-      (bootstrap-version 7))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
+(require 'package)
+(setq package-enable-at-startup nil
+      package-archives
+      '(("gnu"    . "https://elpa.gnu.org/packages/")
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+        ("melpa"  . "https://melpa.org/packages/"))
+      ;; Prefer GNU ELPA (a package available in more than one archive
+      ;; is taken from the highest-priority one, without prompting).
+      package-archive-priorities '(("gnu" . 10) ("nongnu" . 5) ("melpa" . 0)))
+(package-initialize)
 
-(setq package-enable-at-startup nil)
-(setq straight-use-package-by-default t)
-(straight-use-package 'use-package)
+;; :ensure installs a package (and its dependencies) when missing.
+;; Only packages explicitly marked :ensure are fetched -- the libraries
+;; Emacs ships built-in (eglot, project, xref, seq, ...) are left to
+;; Emacs, so no duplicate-feature conflicts can occur.
+(require 'use-package-ensure)
 
 ;; ------------------------------------------------------------------
 ;; Inherit correct PATH
 ;; ------------------------------------------------------------------
 
 (use-package exec-path-from-shell
-  :straight t
+  :ensure t
   :if (or (daemonp) (memq window-system '(x pgtk ns mac)))
   :config
   (setq exec-path-from-shell-variables
@@ -64,7 +62,7 @@
 ;; ------------------------------------------------------------------
 
 (use-package modus-themes
-  :straight t
+  :ensure t
   :demand t
   :bind (("<f5>"     . modus-themes-rotate)
 	 ("C-<f5>"   . modus-themes-select)
@@ -88,11 +86,21 @@
 ;; Misc packages and settings
 ;; ------------------------------------------------------------------
 
-(add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
-(add-to-list 'auto-mode-alist '("\\.jsonc\\'" . json-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.jsonc?\\'" . json-ts-mode))
+
+(use-package which-key
+  :ensure t
+  :demand t
+  :config (which-key-mode 1))
+
+(use-package yaml-mode
+  :ensure t)
+
+(use-package nftables-mode
+  :ensure t)
 
 (use-package orderless
-  :straight t
+  :ensure t
   :demand t
   :custom
   (completion-styles '(orderless basic))
@@ -100,7 +108,7 @@
   (completion-category-defaults nil))
 
 (use-package vertico
-  :straight (vertico :files (:defaults "extensions/*"))
+  :ensure t
   :init (vertico-mode)
   :custom
   (vertico-count 20)
@@ -108,51 +116,26 @@
   (vertico-cycle t))
 
 (use-package marginalia
-  :straight t
+  :ensure t
   :config (marginalia-mode))
 
-(use-package yaml-mode
-  :straight t)
-
-(use-package nftables-mode
-  :straight t)
-
-(use-package corfu
-  :straight t
-  :init (global-corfu-mode)
-  :custom
-  (corfu-cycle t)
-  (corfu-auto t)
-  (corfu-auto-delay 0.25)
-  (corfu-auto-prefix 2))
-
-(use-package consult
-  :straight t
-  :bind (("C-x b"   . consult-buffer)
-         ("C-s"     . consult-line)
-         ("C-M-l"   . consult-imenu)
-         ("C-x C-r" . consult-recent-file)
-         ("C-c M-x" . consult-mode-command)))
-
-(use-package embark
-  :straight t
-  :bind (("C-." . embark-act)
-         ("M-." . embark-dwim)))
-
-(use-package embark-consult
-  :straight t
-  :after (embark consult)
-  :hook (embark-collect-mode . consult-preview-at-point-mode))
+(use-package company
+  :ensure t
+  :config
+  (global-company-mode)
+  (setq company-idle-delay 0.2
+        company-minimum-prefix-length 2
+        company-show-numbers t))
 
 ;; ------------------------------------------------------------------
 ;; Languages: Go, TypeScript, Bash (Eglot + Flymake)
 ;; ------------------------------------------------------------------
 
 ;; Install servers (all on PATH via exec-path-from-shell):
-;;   Go tools install to /home/magnus/opt/go/bin (on PATH):
-;;     GOBIN=/home/magnus/opt/go/bin go install golang.org/x/tools/gopls@latest
-;;     GOBIN=/home/magnus/opt/go/bin go install honnef.co/go/tools/cmd/staticcheck@latest
-;;   npm tools install to the nvm bin (on PATH):
+;;   Go tools install:
+;;     go install golang.org/x/tools/gopls@latest
+;;     go install honnef.co/go/tools/cmd/staticcheck@latest
+;;   npm tools install:
 ;;     npm install -g typescript typescript-language-server bash-language-server
 
 ;; Built-in tree-sitter modes for supported languages
@@ -168,12 +151,15 @@
   (typescript-ts-mode . eglot-ensure)
   (tsx-ts-mode        . eglot-ensure)
   (bash-ts-mode       . eglot-ensure)
+  (typescript-ts-mode . (lambda () (setq-local indent-tabs-mode nil tab-width 2)))
+  (tsx-ts-mode        . (lambda () (setq-local indent-tabs-mode nil tab-width 2)))
   :custom
   (eglot-events-buffer-size 0)
   (eglot-autoshutdown t)
   :config
   (define-key eglot-mode-map (kbd "C-c r") #'eglot-rename)
   (define-key eglot-mode-map (kbd "C-c a") #'eglot-code-actions)
+  (define-key eglot-mode-map (kbd "C-c =") #'eglot-format)
   (add-to-list 'completion-at-point-functions #'eglot-completion-at-point)
   (setq eglot-workspace-configuration
         '((gopls . ((staticcheck . t)
@@ -181,9 +167,3 @@
                     (usePlaceholders . t)
                     (directoryFilters
                      . ["-**/node_modules" "-**/vendor" "-**/third_party"]))))))
-
-;; ------------------------------------------------------------------
-
-(provide 'init)
-
-;;; init.el ends here
