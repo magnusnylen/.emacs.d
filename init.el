@@ -12,14 +12,26 @@
 
 (tool-bar-mode -1)
 (menu-bar-mode -1)
-(if (member "CaskaydiaMono NF" (font-family-list))
-    (add-to-list 'default-frame-alist '(font . "CaskaydiaMono NF-13"))
-  (add-to-list 'default-frame-alist '(font . "monospace-13")))
 (setq inhibit-startup-screen t
       initial-buffer-choice nil
       ring-bell-function 'ignore
       make-backup-files nil)
 (global-display-line-numbers-mode 1)
+
+;; Set font the robust way
+(defun my/set-font ()
+  "Set font if CaskaydiaMono NF is available."
+  (when (display-graphic-p)
+    (let ((font (if (member "CaskaydiaMono NF" (font-family-list))
+                    "CaskaydiaMono NF-13"
+                  "monospace-13")))
+      (add-to-list 'default-frame-alist `(font . ,font))
+      (set-frame-font font nil t))))
+;; Apply now if GUI is available
+(when (display-graphic-p)
+  (my/set-font))
+;; Apply to future frames (critical for daemon mode)
+(add-hook 'after-make-frame-hook #'my/set-font)
 
 ;; ------------------------------------------------------------------
 ;; Package management (vanilla package.el)
