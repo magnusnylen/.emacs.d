@@ -12,8 +12,11 @@
 ;; Basic  settings
 ;; ------------------------------------------------------------------
 
-(tool-bar-mode -1)
-(menu-bar-mode -1)
+(when (display-graphic-p)
+  (tool-bar-mode -1)
+  (menu-bar-mode -1)
+  (scroll-bar-mode -1))
+
 (setq inhibit-startup-screen t
       initial-buffer-choice nil
       ring-bell-function 'ignore
@@ -76,6 +79,7 @@
 ;; Theme
 ;; ------------------------------------------------------------------
 
+(setq native-comp-async-report-warnings nil)
 (use-package modus-themes
   :ensure t
   :demand t
